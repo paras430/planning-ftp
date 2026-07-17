@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: planning ftp
     ports:
-      - "0.0.0.0:4000"
+      - "0.0.0.0:4000:4000"
     env_file:
       - .env
     volumes:

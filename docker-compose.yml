@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  planning-ftp:
+    build:
+      context: .
+      dockerfile: planning ftp
+    ports:
+      - "0.0.0.0:4000:4000"
+    env_file:
+      - .env
+    volumes:
+      - planning-ftp-uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  planning-ftp-uploads:

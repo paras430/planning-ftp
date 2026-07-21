@@ -45,11 +45,12 @@ if (configuredUsers.length > 0) {
 
 // Map frontend folder names to safe physical directory names
 const FOLDER_MAP = {
-  'Survey Reports': 'Survey_Reports',
-  'Microwave': 'Microwave',
+  'Optical Plan': 'Optical_Plan',
+  'Microwave Plan': 'Microwave_Plan',
   'Progress': 'Progress',
   'KMLs': 'KMLs',
-  'Letters/MOMs': 'Letters_MOMs',
+  'LETTERS': 'LETTERS',
+  'MOMS': 'MOMS',
   'Misc': 'Misc',
   'Images': 'Images'
 };
@@ -84,7 +85,7 @@ const db = new sqlite3.Database(DB_FILE, (err) => {
         db.run("UPDATE files SET projectId = ''", (err) => {
            if (err) console.error("Error wiping projectId:", err.message);
         });
-        migrateJsonToSqlite();
+        migrateJsonToSqlite().then(() => migrateFolders()).catch(err => console.error("Migration error:", err));
       }
     });
   }
@@ -133,9 +134,19 @@ async function migrateJsonToSqlite() {
           if (!exists) {
             // Re-map folder name if it was the old one
             let folder = m.folder || 'Misc';
-            if (folder === 'Letter/MOMs/Reports' || folder === 'Letter/MOM/Report') folder = 'Letters/MOMs';
+            if (folder === 'Letter/MOMs/Reports' || folder === 'Letter/MOM/Report' || folder === 'Letters/MOMs') {
+              if (m.originalname && m.originalname.toLowerCase().includes('mom')) {
+                folder = 'MOMS';
+              } else {
+                folder = 'LETTERS';
+              }
+            } else if (folder === 'Survey Reports' || folder === 'Survey Report') {
+              folder = 'Optical Plan';
+            } else if (folder === 'Microwave') {
+              folder = 'Microwave Plan';
+            }
             
-            const safeFolder = FOLDER_MAP[folder] || m.safeFolder || '';
+            const safeFolder = FOLDER_MAP[folder] || m.safeFolder || 'Misc';
             
             await runQuery(`INSERT INTO files (id, filename, originalname, size, format, folder, safeFolder, projectId, year, remarks, uploadDate) 
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
@@ -150,6 +161,71 @@ async function migrateJsonToSqlite() {
     } catch (e) {
       console.error('Error during migration:', e);
     }
+  }
+}
+
+// Helper function to safely move a file if it exists
+function movePhysicalFile(oldSafeFolder, newSafeFolder, filename) {
+  const oldPath = path.join(UPLOADS_DIR, oldSafeFolder, filename);
+  const newDirPath = path.join(UPLOADS_DIR, newSafeFolder);
+  const newPath = path.join(newDirPath, filename);
+  try {
+    if (fs.existsSync(oldPath)) {
+      if (!fs.existsSync(newDirPath)) {
+        fs.mkdirSync(newDirPath, { recursive: true });
+      }
+      fs.renameSync(oldPath, newPath);
+      console.log(`Physically moved file ${filename} from ${oldSafeFolder} to ${newSafeFolder}`);
+    }
+  } catch (err) {
+    console.error(`Failed to physically move file ${filename}:`, err);
+  }
+}
+
+// Migrate existing folders to the new naming scheme
+async function migrateFolders() {
+  try {
+    // 1. Migrate Survey Reports / Survey Report to Optical Plan
+    const surveyFiles = await allQuery(`SELECT filename, safeFolder FROM files WHERE folder = 'Survey Reports' OR folder = 'Survey Report'`);
+    for (const f of surveyFiles) {
+      movePhysicalFile(f.safeFolder || 'Survey_Reports', 'Optical_Plan', f.filename);
+    }
+    await runQuery(`UPDATE files SET folder = 'Optical Plan', safeFolder = 'Optical_Plan' WHERE folder = 'Survey Reports' OR folder = 'Survey Report'`);
+
+    // 2. Migrate Microwave to Microwave Plan
+    const microwaveFiles = await allQuery(`SELECT filename, safeFolder FROM files WHERE folder = 'Microwave'`);
+    for (const f of microwaveFiles) {
+      movePhysicalFile(f.safeFolder || 'Microwave', 'Microwave_Plan', f.filename);
+    }
+    await runQuery(`UPDATE files SET folder = 'Microwave Plan', safeFolder = 'Microwave_Plan' WHERE folder = 'Microwave'`);
+
+    // 3. Migrate Letters/MOMs to LETTERS and MOMS
+    const letterMomFiles = await allQuery(`SELECT filename, originalname, safeFolder FROM files WHERE folder = 'Letters/MOMs'`);
+    for (const f of letterMomFiles) {
+      const isMom = f.originalname && f.originalname.toLowerCase().includes('mom');
+      const targetFolder = isMom ? 'MOMS' : 'LETTERS';
+      movePhysicalFile(f.safeFolder || 'Letters_MOMs', targetFolder, f.filename);
+      await runQuery(`UPDATE files SET folder = ?, safeFolder = ? WHERE filename = ?`, [targetFolder, targetFolder, f.filename]);
+    }
+    
+    // Clean up empty legacy directories
+    const oldDirs = ['Survey_Reports', 'Microwave', 'Letters_MOMs'];
+    for (const d of oldDirs) {
+      const dirPath = path.join(UPLOADS_DIR, d);
+      if (fs.existsSync(dirPath)) {
+        try {
+          const files = fs.readdirSync(dirPath);
+          if (files.length === 0) {
+            fs.rmdirSync(dirPath);
+            console.log(`Removed empty legacy directory: ${d}`);
+          }
+        } catch (dirErr) {
+          // ignore
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error migrating folders in DB:', err);
   }
 }
 

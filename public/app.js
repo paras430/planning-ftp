@@ -28,11 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Folders Definition
     const FOLDERS = [
-        { name: 'Survey Reports', color: 'var(--c-blue)' },
-        { name: 'Microwave', color: 'var(--c-purple)' },
+        { name: 'Optical Plan', color: 'var(--c-blue)' },
+        { name: 'Microwave Plan', color: 'var(--c-purple)' },
         { name: 'Progress', color: 'var(--c-green)' },
         { name: 'KMLs', color: 'var(--c-orange)' },
-        { name: 'Letters/MOMs', color: 'var(--c-pink)' },
+        { name: 'LETTERS', color: 'var(--c-pink)' },
+        { name: 'MOMS', color: 'var(--c-pink)' },
         { name: 'Misc', color: 'var(--c-gray)' },
         { name: 'Images', color: 'var(--c-teal)' }
     ];
@@ -493,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="file-name-container">
                         <div style="font-weight: 500; word-break: break-all;">${escapeHtml(file.originalname)}</div>
                         <div class="file-details">
-                            <span>Uploaded by: <strong style="color: var(--primary-color);">${escapeHtml(file.uploader || 'Unknown')}</strong></span>
+                            <span>Uploaded by: <strong style="color: var(--primary-color);">${escapeHtml((file.uploader || 'Unknown').split('_')[0])}</strong></span>
                             <span>${sizeMB} MB</span>
                             <span class="format-badge">${escapeHtml(file.format)}</span>
                         </div>

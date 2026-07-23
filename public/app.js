@@ -485,7 +485,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 tableTitle.textContent = `${currentActiveFolder}`;
                 colFolder.classList.add('hidden'); 
                 dashboardGrid.classList.remove('hidden');
-                btnBack.classList.add('hidden');
+                btnBack.classList.remove('hidden');
+                btnBack.innerHTML = `&larr; Back`;
                 btnBackupFolder.classList.add('hidden');
                 
                 filteredFiles = allFiles.filter(f => f.folder === currentActiveFolder);

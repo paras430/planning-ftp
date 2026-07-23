@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentRole = sessionStorage.getItem('role') || 'Viewer';
     let allFiles = [];
     let currentActiveFolder = null; // null means 'All Files'
+    let currentActiveSubfolder = null;
     let visibleCount = 5;
 
     const loginScreen = document.getElementById('login-screen');
@@ -78,6 +79,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnBulkDelete.classList.remove('hidden');
             } else {
                 btnBulkDelete.classList.add('hidden');
+            }
+            
+            // Show/hide Edit button based on role
+            if (currentRole === 'Viewer') {
+                btnBulkEdit.classList.add('hidden');
+            } else {
+                btnBulkEdit.classList.remove('hidden');
             }
             
             loadFiles();
@@ -156,7 +164,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnBack.addEventListener('click', () => {
-        currentActiveFolder = null;
+        if (currentActiveSubfolder) {
+            currentActiveSubfolder = null;
+        } else {
+            currentActiveFolder = null;
+        }
         searchInput.value = '';
         visibleCount = 5;
         renderDashboard();
@@ -169,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnBackupFolder.addEventListener('click', async () => {
-        if (!currentActiveFolder) return;
+        if (!currentActiveFolder || !currentActiveSubfolder) return;
         const originalText = btnBackupFolder.innerHTML;
         btnBackupFolder.disabled = true;
         btnBackupFolder.innerHTML = `
@@ -177,7 +189,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <span>Zipping Folder...</span>
         `;
         try {
-            const downloadUrl = `/api/backup-zip?token=${encodeURIComponent(authHeader)}&folder=${encodeURIComponent(currentActiveFolder)}`;
+            const subfolderYear = currentActiveSubfolder.split('_')[1] || '';
+            const downloadUrl = `/api/backup-zip?token=${encodeURIComponent(authHeader)}&folder=${encodeURIComponent(currentActiveFolder)}&year=${encodeURIComponent(subfolderYear)}`;
             const response = await fetchAuth(downloadUrl);
             if (!response.ok) {
                 const errData = await response.json();
@@ -189,8 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            const safeFolder = currentActiveFolder.replace(/[^a-zA-Z0-9]/g, '_');
-            a.download = `ftp_files_backup_${safeFolder}.zip`;
+            a.download = `ftp_files_backup_${currentActiveSubfolder}.zip`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -361,34 +373,65 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderDashboard() {
         dashboardGrid.innerHTML = '';
         
-        FOLDERS.forEach(folder => {
-            const count = allFiles.filter(f => f.folder === folder.name).length;
-            
-            const card = document.createElement('div');
-            card.className = `folder-card ${currentActiveFolder === folder.name ? 'active' : ''}`;
-            
-            card.innerHTML = `
-                <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="${folder.color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <div class="folder-title">${escapeHtml(folder.name)}</div>
-                <div class="folder-count">${count} file${count !== 1 ? 's' : ''}</div>
-            `;
-            
-            card.addEventListener('click', () => {
-                visibleCount = 5;
-                if (currentActiveFolder === folder.name) {
-                    currentActiveFolder = null;
-                } else {
+        if (!currentActiveFolder) {
+            FOLDERS.forEach(folder => {
+                const count = allFiles.filter(f => f.folder === folder.name).length;
+                
+                const card = document.createElement('div');
+                card.className = `folder-card ${currentActiveFolder === folder.name ? 'active' : ''}`;
+                
+                card.innerHTML = `
+                    <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="${folder.color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <div class="folder-title">${escapeHtml(folder.name)}</div>
+                    <div class="folder-count">${count} file${count !== 1 ? 's' : ''}</div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    visibleCount = 5;
                     currentActiveFolder = folder.name;
+                    currentActiveSubfolder = null;
                     searchInput.value = '';
-                }
-                renderDashboard();
-                applyCurrentFilter();
+                    renderDashboard();
+                    applyCurrentFilter();
+                });
+                
+                dashboardGrid.appendChild(card);
             });
-            
-            dashboardGrid.appendChild(card);
-        });
+        } else {
+            const folderFiles = allFiles.filter(f => f.folder === currentActiveFolder);
+            const yearsSet = new Set(folderFiles.map(f => f.uploadDate ? new Date(f.uploadDate).getFullYear() : new Date().getFullYear()));
+            if (yearsSet.size === 0) {
+                yearsSet.add(new Date().getFullYear());
+            }
+            const years = Array.from(yearsSet).sort((a, b) => b - a);
+
+            years.forEach(year => {
+                const subfolderName = currentActiveFolder.replace(/\s+/g, '') + '_' + year;
+                const count = folderFiles.filter(f => (f.uploadDate ? new Date(f.uploadDate).getFullYear() : new Date().getFullYear()) === year).length;
+
+                const card = document.createElement('div');
+                card.className = `folder-card ${currentActiveSubfolder === subfolderName ? 'active' : ''}`;
+
+                card.innerHTML = `
+                    <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <div class="folder-title">${escapeHtml(subfolderName)}</div>
+                    <div class="folder-count">${count} file${count !== 1 ? 's' : ''}</div>
+                `;
+
+                card.addEventListener('click', () => {
+                    visibleCount = 5;
+                    currentActiveSubfolder = subfolderName;
+                    renderDashboard();
+                    applyCurrentFilter();
+                });
+
+                dashboardGrid.appendChild(card);
+            });
+        }
     }
 
     // Apply Filter based on Folder selection or Global Search
@@ -399,6 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (query) {
             currentActiveFolder = null; 
+            currentActiveSubfolder = null;
             renderDashboard(); 
             
             tableTitle.textContent = `Search Results for "${query}"`;
@@ -408,20 +452,31 @@ document.addEventListener('DOMContentLoaded', () => {
             btnBackupFolder.classList.add('hidden');
             
             filteredFiles = allFiles.filter(file => 
-                file.originalname.toLowerCase().includes(query) ||
-                file.year.toString().includes(query) ||
-                file.remarks.toLowerCase().includes(query) ||
-                file.format.toLowerCase().includes(query) ||
-                file.folder.toLowerCase().includes(query)
+                (file.originalname && file.originalname.toLowerCase().includes(query)) ||
+                (file.year && file.year.toString().includes(query)) ||
+                (file.remarks && file.remarks.toLowerCase().includes(query)) ||
+                (file.format && file.format.toLowerCase().includes(query)) ||
+                (file.folder && file.folder.toLowerCase().includes(query))
             );
         } else if (currentActiveFolder) {
-            tableTitle.textContent = `${currentActiveFolder}`;
-            colFolder.classList.add('hidden'); 
-            dashboardGrid.classList.add('hidden');
-            btnBack.classList.remove('hidden');
-            btnBackupFolder.classList.remove('hidden');
-            
-            filteredFiles = allFiles.filter(f => f.folder === currentActiveFolder);
+            if (currentActiveSubfolder) {
+                tableTitle.textContent = `${currentActiveSubfolder}`;
+                colFolder.classList.add('hidden'); 
+                dashboardGrid.classList.add('hidden');
+                btnBack.classList.remove('hidden');
+                btnBackupFolder.classList.remove('hidden');
+                
+                const subYear = parseInt(currentActiveSubfolder.split('_')[1], 10);
+                filteredFiles = allFiles.filter(f => f.folder === currentActiveFolder && (f.uploadDate ? new Date(f.uploadDate).getFullYear() : new Date().getFullYear()) === subYear);
+            } else {
+                tableTitle.textContent = `${currentActiveFolder}`;
+                colFolder.classList.add('hidden'); 
+                dashboardGrid.classList.remove('hidden');
+                btnBack.classList.remove('hidden');
+                btnBackupFolder.classList.add('hidden');
+                
+                filteredFiles = allFiles.filter(f => f.folder === currentActiveFolder);
+            }
         } else {
             tableTitle.textContent = `All Files`;
             colFolder.classList.remove('hidden'); 
@@ -455,7 +510,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset top-level buttons
         selectAll.checked = false;
         updateBulkButtons();
-        btnBulkEdit.classList.remove('hidden');
+        if (currentRole === 'Viewer') {
+            btnBulkEdit.classList.add('hidden');
+        } else {
+            btnBulkEdit.classList.remove('hidden');
+        }
         btnBulkSave.classList.add('hidden');
 
         if (files.length === 0) {

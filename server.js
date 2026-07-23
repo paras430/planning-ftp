@@ -85,7 +85,10 @@ const db = new sqlite3.Database(DB_FILE, (err) => {
         db.run("UPDATE files SET projectId = ''", (err) => {
            if (err) console.error("Error wiping projectId:", err.message);
         });
-        migrateJsonToSqlite().then(() => migrateFolders()).catch(err => console.error("Migration error:", err));
+        migrateJsonToSqlite()
+          .then(() => migrateFolders())
+          .then(() => migrateToSubfolders())
+          .catch(err => console.error("Migration error:", err));
       }
     });
   }
@@ -229,6 +232,41 @@ async function migrateFolders() {
   }
 }
 
+// Migrate existing files into year-based subfolders
+async function migrateToSubfolders() {
+  try {
+    const files = await allQuery(`SELECT * FROM files`);
+    for (const f of files) {
+      if (!f.uploadDate) continue;
+      const uploadYear = new Date(f.uploadDate).getFullYear();
+      if (isNaN(uploadYear)) continue;
+
+      const folder = f.folder || 'Misc';
+      const baseSafeFolder = FOLDER_MAP[folder] || 'Misc';
+      const subfolderName = folder.replace(/\s+/g, '') + '_' + uploadYear;
+      const targetSafeFolder = `${baseSafeFolder}/${subfolderName}`;
+
+      if (f.safeFolder !== targetSafeFolder) {
+        const oldSafeFolder = f.safeFolder || baseSafeFolder;
+        const oldPath = path.join(UPLOADS_DIR, oldSafeFolder, f.filename);
+        const newDirPath = path.join(UPLOADS_DIR, baseSafeFolder, subfolderName);
+        const newPath = path.join(newDirPath, f.filename);
+
+        if (fs.existsSync(oldPath)) {
+          if (!fs.existsSync(newDirPath)) {
+            fs.mkdirSync(newDirPath, { recursive: true });
+          }
+          fs.renameSync(oldPath, newPath);
+          console.log(`Migrated file ${f.filename} to ${targetSafeFolder}`);
+        }
+        await runQuery(`UPDATE files SET safeFolder = ? WHERE filename = ?`, [targetSafeFolder, f.filename]);
+      }
+    }
+  } catch (err) {
+    console.error('Error in migrateToSubfolders:', err);
+  }
+}
+
 // Multer configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -337,10 +375,14 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
   }
 
   let folder = req.body.folder || 'Misc';
-  const safeFolder = FOLDER_MAP[folder] || 'Misc';
+  const baseSafeFolder = FOLDER_MAP[folder] || 'Misc';
+  const uploadDate = new Date().toISOString();
+  const uploadYear = new Date(uploadDate).getFullYear();
+  const subfolderName = folder.replace(/\s+/g, '') + '_' + uploadYear;
+  const safeFolder = `${baseSafeFolder}/${subfolderName}`;
   
   // Now that we have the parsed req.body, move the file to the correct folder
-  const folderPath = path.join(UPLOADS_DIR, safeFolder);
+  const folderPath = path.join(UPLOADS_DIR, baseSafeFolder, subfolderName);
   if (!fs.existsSync(folderPath)) {
     fs.mkdirSync(folderPath, { recursive: true });
   }
@@ -362,7 +404,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     projectId: req.body.projectId || '',
     year: req.body.year || '',
     remarks: req.body.remarks || '',
-    uploadDate: new Date().toISOString(),
+    uploadDate: uploadDate,
     uploader: req.user || 'Unknown'
   };
 
@@ -379,12 +421,21 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 
 app.get('/api/backup-zip', async (req, res) => {
   const folderFilter = req.query.folder;
+  const yearFilter = req.query.year;
   try {
     let query = `SELECT * FROM files`;
     let params = [];
+    let conditions = [];
     if (folderFilter) {
-      query += ` WHERE folder = ?`;
+      conditions.push(`folder = ?`);
       params.push(folderFilter);
+    }
+    if (yearFilter) {
+      conditions.push(`uploadDate LIKE ?`);
+      params.push(`${yearFilter}%`);
+    }
+    if (conditions.length > 0) {
+      query += ` WHERE ` + conditions.join(' AND ');
     }
 
     const files = await allQuery(query, params);
@@ -392,7 +443,8 @@ app.get('/api/backup-zip', async (req, res) => {
       return res.status(404).json({ error: 'No files to backup' });
     }
 
-    const safeFolderName = folderFilter ? folderFilter.replace(/[^a-zA-Z0-9]/g, '_') : 'all';
+    const subfolderName = folderFilter ? (folderFilter.replace(/\s+/g, '') + (yearFilter ? `_${yearFilter}` : '')) : 'all';
+    const safeFolderName = subfolderName.replace(/[^a-zA-Z0-9]/g, '_');
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename=ftp_files_backup_${safeFolderName}.zip`);
 
@@ -409,7 +461,9 @@ app.get('/api/backup-zip', async (req, res) => {
     for (const file of files) {
       const filePath = path.join(UPLOADS_DIR, file.safeFolder || '', file.filename);
       if (fs.existsSync(filePath)) {
-        const zipPath = path.join(file.folder || 'Misc', file.originalname);
+        const fileYear = file.uploadDate ? new Date(file.uploadDate).getFullYear() : 'Unknown';
+        const fileSubfolder = (file.folder || 'Misc').replace(/\s+/g, '') + '_' + fileYear;
+        const zipPath = path.join(fileSubfolder, file.originalname);
         archive.file(filePath, { name: zipPath });
       }
     }
@@ -482,10 +536,13 @@ app.put('/api/files/:filename', async (req, res) => {
       // Handle Folder Change / Physical Move
       if (folder && folder !== currentData.folder) {
         newFolder = folder;
-        newSafeFolder = FOLDER_MAP[newFolder] || 'Misc';
+        const uploadYear = new Date(currentData.uploadDate || new Date()).getFullYear();
+        const subfolderName = newFolder.replace(/\s+/g, '') + '_' + uploadYear;
+        const baseSafeFolder = FOLDER_MAP[newFolder] || 'Misc';
+        newSafeFolder = `${baseSafeFolder}/${subfolderName}`;
         
         const oldPath = path.join(UPLOADS_DIR, currentData.safeFolder || '', filename);
-        const newDirPath = path.join(UPLOADS_DIR, newSafeFolder);
+        const newDirPath = path.join(UPLOADS_DIR, baseSafeFolder, subfolderName);
         const newPath = path.join(newDirPath, filename);
 
         try {

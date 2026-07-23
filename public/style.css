@@ -756,19 +756,22 @@ tr:hover td {
 
 /* Minimalist Back Button */
 .btn-back-minimal {
-    padding: 0.45rem 0.9rem !important;
-    font-size: 0.85rem !important;
-    font-weight: 500 !important;
-    border-radius: 6px !important;
-    background: var(--input-bg, #ffffff) !important;
-    border: 1px solid var(--border-color, #e2e8f0) !important;
-    color: var(--text-color) !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 0.4rem !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 6px;
+    background: var(--input-bg, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.btn-back-minimal.hidden {
+    display: none !important;
 }
 .btn-back-minimal:hover {
     background: var(--primary-color) !important;

@@ -163,6 +163,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return res;
     }
 
+    const btnHome = document.getElementById('btn-home');
+    if (btnHome) {
+        btnHome.addEventListener('click', () => {
+            currentActiveFolder = null;
+            currentActiveSubfolder = null;
+            searchInput.value = '';
+            visibleCount = 5;
+            renderDashboard();
+            applyCurrentFilter();
+        });
+    }
+
     btnBack.addEventListener('click', () => {
         if (currentActiveSubfolder) {
             currentActiveSubfolder = null;
@@ -412,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const count = folderFiles.filter(f => (f.uploadDate ? new Date(f.uploadDate).getFullYear() : new Date().getFullYear()) === year).length;
 
                 const card = document.createElement('div');
-                card.className = `folder-card ${currentActiveSubfolder === subfolderName ? 'active' : ''}`;
+                card.className = `subfolder-card ${currentActiveSubfolder === subfolderName ? 'active' : ''}`;
 
                 card.innerHTML = `
                     <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -464,6 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 colFolder.classList.add('hidden'); 
                 dashboardGrid.classList.add('hidden');
                 btnBack.classList.remove('hidden');
+                btnBack.innerHTML = `&larr; Back to ${escapeHtml(currentActiveFolder)}`;
                 btnBackupFolder.classList.remove('hidden');
                 
                 const subYear = parseInt(currentActiveSubfolder.split('_')[1], 10);
@@ -473,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 colFolder.classList.add('hidden'); 
                 dashboardGrid.classList.remove('hidden');
                 btnBack.classList.remove('hidden');
+                btnBack.innerHTML = `&larr; Back to Folders`;
                 btnBackupFolder.classList.add('hidden');
                 
                 filteredFiles = allFiles.filter(f => f.folder === currentActiveFolder);

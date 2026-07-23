@@ -742,3 +742,83 @@ tr:hover td {
 .hidden {
     display: none !important;
 }
+
+/* Logo Home Button */
+.logo {
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.logo:hover {
+    opacity: 0.85;
+    transform: scale(1.02);
+}
+
+/* Minimalist Back Button */
+.btn-back-minimal {
+    padding: 0.45rem 0.9rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    background: var(--input-bg, #ffffff) !important;
+    border: 1px solid var(--border-color, #e2e8f0) !important;
+    color: var(--text-color) !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+}
+.btn-back-minimal:hover {
+    background: var(--primary-color) !important;
+    color: #ffffff !important;
+    border-color: var(--primary-color) !important;
+    transform: translateX(-2px) !important;
+}
+
+/* Minimalist Checkboxes */
+input[type="checkbox"].row-checkbox, #select-all {
+    width: 15px !important;
+    height: 15px !important;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+    margin: 0;
+    vertical-align: middle;
+    transform: none !important;
+    border-radius: 4px;
+}
+
+/* Small & Compact Subfolder Cards */
+.subfolder-card {
+    padding: 0.6rem 1rem !important;
+    min-height: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    border-radius: 8px !important;
+    background: var(--panel-bg, var(--input-bg)) !important;
+    border: 1px solid var(--border-color, var(--table-border)) !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+.subfolder-card:hover {
+    border-color: var(--primary-color) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08) !important;
+}
+.subfolder-card .folder-icon {
+    width: 20px !important;
+    height: 20px !important;
+    flex-shrink: 0;
+}
+.subfolder-card .folder-title {
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+}
+.subfolder-card .folder-count {
+    font-size: 0.78rem !important;
+    color: var(--text-muted) !important;
+    margin-left: auto !important;
+}

@@ -460,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tableTitle.textContent = `Search Results for "${query}"`;
             colFolder.classList.remove('hidden'); 
             dashboardGrid.classList.add('hidden');
-            btnBack.classList.remove('hidden');
+            btnBack.classList.add('hidden');
             btnBackupFolder.classList.add('hidden');
             
             filteredFiles = allFiles.filter(file => 
@@ -485,8 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tableTitle.textContent = `${currentActiveFolder}`;
                 colFolder.classList.add('hidden'); 
                 dashboardGrid.classList.remove('hidden');
-                btnBack.classList.remove('hidden');
-                btnBack.innerHTML = `&larr; Back`;
+                btnBack.classList.add('hidden');
                 btnBackupFolder.classList.add('hidden');
                 
                 filteredFiles = allFiles.filter(f => f.folder === currentActiveFolder);

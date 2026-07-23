@@ -52,7 +52,8 @@ const FOLDER_MAP = {
   'LETTERS': 'LETTERS',
   'MOMS': 'MOMS',
   'Misc': 'Misc',
-  'Images': 'Images'
+  'Reference Docs': 'Reference_Docs',
+  'Images': 'Reference_Docs'
 };
 
 // Initialize SQLite Database
@@ -235,6 +236,7 @@ async function migrateFolders() {
 // Migrate existing files into year-based subfolders
 async function migrateToSubfolders() {
   try {
+    await runQuery(`UPDATE files SET folder = 'Reference Docs' WHERE folder = 'Images'`);
     const files = await allQuery(`SELECT * FROM files`);
     for (const f of files) {
       if (!f.uploadDate) continue;

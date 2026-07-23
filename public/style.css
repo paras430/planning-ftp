@@ -779,14 +779,14 @@ tr:hover td {
 
 /* Minimalist Checkboxes */
 input[type="checkbox"].row-checkbox, #select-all {
-    width: 15px !important;
-    height: 15px !important;
+    width: 12px !important;
+    height: 12px !important;
     cursor: pointer;
     accent-color: var(--primary-color);
     margin: 0;
     vertical-align: middle;
     transform: none !important;
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 /* Small & Compact Subfolder Cards */

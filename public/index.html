@@ -60,19 +60,19 @@
                         <input type="file" id="file-input" name="file" required>
                     </div>
                     <div class="form-group" style="margin-bottom: 1.5rem;">
-                        <label>Select Folder</label>
-                        <div class="folder-radio-group">
-                            <label class="folder-radio"><input type="radio" name="folder" value="Optical Plan" checked><span>Optical Plan</span></label>
-                            <label class="folder-radio"><input type="radio" name="folder" value="Microwave Plan"><span>Microwave Plan</span></label>
-                            <label class="folder-radio"><input type="radio" name="folder" value="Progress"><span>Progress</span></label>
-                            <label class="folder-radio"><input type="radio" name="folder" value="KMLs"><span>KMLs</span></label>
-                            <label class="folder-radio"><input type="radio" name="folder" value="LETTERS"><span>LETTERS</span></label>
-                            <label class="folder-radio"><input type="radio" name="folder" value="MOMS"><span>MOMS</span></label>
-                            <label class="folder-radio"><input type="radio" name="folder" value="Survey Report"><span>Survey Report</span></label>
-                            <label class="folder-radio"><input type="radio" name="folder" value="As-Built Reports"><span>As-Built Reports</span></label>
-                            <label class="folder-radio"><input type="radio" name="folder" value="Misc"><span>Misc</span></label>
-                            <label class="folder-radio"><input type="radio" name="folder" value="Reference Docs"><span>Reference Docs</span></label>
-                        </div>
+                        <label for="upload-folder-select">Select Folder</label>
+                        <select name="folder" id="upload-folder-select" class="folder-select-dropdown" required>
+                            <option value="Optical Plan" selected>Optical Plan</option>
+                            <option value="Microwave Plan">Microwave Plan</option>
+                            <option value="Progress">Progress</option>
+                            <option value="KMLs">KMLs</option>
+                            <option value="LETTERS">LETTERS</option>
+                            <option value="MOMS">MOMS</option>
+                            <option value="Survey Report">Survey Report</option>
+                            <option value="As-Built Reports">As-Built Reports</option>
+                            <option value="Misc">Misc</option>
+                            <option value="Reference Docs">Reference Docs</option>
+                        </select>
                     </div>
                     <div class="form-row">
                         <div class="form-group">

@@ -51,6 +51,8 @@ const FOLDER_MAP = {
   'KMLs': 'KMLs',
   'LETTERS': 'LETTERS',
   'MOMS': 'MOMS',
+  'Survey Report': 'Survey_Report',
+  'As-Built Reports': 'As-Built_Reports',
   'Misc': 'Misc',
   'Reference Docs': 'Reference_Docs',
   'Images': 'Reference_Docs'

@@ -34,6 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'KMLs', color: 'var(--c-orange)' },
         { name: 'LETTERS', color: 'var(--c-pink)' },
         { name: 'MOMS', color: 'var(--c-pink)' },
+        { name: 'Survey Report', color: 'var(--c-indigo)' },
+        { name: 'As-Built Reports', color: 'var(--c-amber)' },
         { name: 'Misc', color: 'var(--c-gray)' },
         { name: 'Reference Docs', color: 'var(--c-teal)' }
     ];
@@ -476,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 colFolder.classList.add('hidden'); 
                 dashboardGrid.classList.add('hidden');
                 btnBack.classList.remove('hidden');
-                btnBack.innerHTML = `&larr; Back`;
+                btnBack.textContent = 'Back';
                 btnBackupFolder.classList.remove('hidden');
                 
                 const subYear = parseInt(currentActiveSubfolder.split('_')[1], 10);
@@ -486,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 colFolder.classList.add('hidden'); 
                 dashboardGrid.classList.remove('hidden');
                 btnBack.classList.remove('hidden');
-                btnBack.innerHTML = `&larr; Back`;
+                btnBack.textContent = 'Back';
                 btnBackupFolder.classList.add('hidden');
                 
                 filteredFiles = allFiles.filter(f => f.folder === currentActiveFolder);

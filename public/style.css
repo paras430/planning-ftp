@@ -28,6 +28,8 @@
     --c-pink: #ec4899;
     --c-gray: #64748b;
     --c-teal: #0d9488;
+    --c-indigo: #6366f1;
+    --c-amber: #d97706;
 }
 
 [data-theme="dark"] {
@@ -58,6 +60,8 @@
     --c-pink: #f472b6;
     --c-gray: #94a3b8;
     --c-teal: #2dd4bf;
+    --c-indigo: #818cf8;
+    --c-amber: #fbbf24;
 }
 
 * {
@@ -754,30 +758,34 @@ tr:hover td {
     transform: scale(1.02);
 }
 
-/* Minimalist Back Button */
-.btn-back-minimal {
-    padding: 0.45rem 0.9rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    border-radius: 6px;
-    background: var(--input-bg, #ffffff);
-    border: 1px solid var(--border-color, #e2e8f0);
-    color: var(--text-color);
+/* Highlighted Back Button */
+.btn-back-highlight, .btn-back-minimal {
+    padding: 0.5rem 1.15rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 8px;
+    background: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    color: #ffffff !important;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
 }
-.btn-back-minimal.hidden {
+.btn-back-highlight.hidden, .btn-back-minimal.hidden {
     display: none !important;
 }
-.btn-back-minimal:hover {
-    background: var(--primary-color) !important;
+.btn-back-highlight:hover, .btn-back-minimal:hover {
+    background: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
     color: #ffffff !important;
-    border-color: var(--primary-color) !important;
-    transform: translateX(-2px) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.45);
+}
+.btn-back-highlight:active, .btn-back-minimal:active {
+    transform: translateY(0);
 }
 
 /* Minimalist Checkboxes */
